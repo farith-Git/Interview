@@ -1,73 +1,135 @@
 import React, { useState } from 'react';
-//import { storage } from './firebase'; // Import the storage object
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { toast } from 'react-toastify';
+import './customStyles.css'
+import { storage } from './firebase'
 
-import { initializeApp } from 'firebase/app';
-import { getStorage } from 'firebase/storage';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCdz4FA4u3JE07D3gvjGsBj92pS9pHfY1E",
-  authDomain: "interview-1b020.firebaseapp.com",
-  projectId: "interview-1b020",
-  storageBucket: "interview-1b020.appspot.com",
-  messagingSenderId: "646293491486",
-  appId: "1:646293491486:web:ec66b40a2c878bddd1830f",
-  measurementId: "G-GJFX04JYCS"
-};
-
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
 
 const ImageUpload = () => {
-    const [file, setFile] = useState(null);
-    const [progress, setProgress] = useState(0);
+  const [file, setFile] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [imageUrl, setImageUrl] = useState('');
+  const [isLoad, setIsLoad] = useState('');
+  const [prevImg, setPrevImg] = useState('');
 
     const handleChange = (e) => {
-        if (e.target.files[0]) {
-            setFile(e.target.files[0]);
+        setImageUrl('');
+        setPrevImg('')
+        const selectedFile = e.target.files[0];
+        if (selectedFile) {
+            const fileType = selectedFile.type;
+            if (!fileType.startsWith('image/')) {
+                toast.error('Invalid file type. Please select an image file.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                setPrevImg(reader.result);
+            };
+            reader.readAsDataURL(selectedFile);
+
+            setFile(selectedFile);
         }
     };
 
-    const handleUpload = () => {
-        if (!file) return; // Do not proceed if no file is selected
+  const handleUpload = () => {
 
-        const storageRef = storage.ref(); // Get a reference to the root of Firebase Storage
-        const fileRef = storageRef.child('images/' + file.name); // Create a reference to the file path in Storage
+    toast.dismiss();
 
-        const uploadTask = fileRef.put(file); // Upload the file to Firebase Storage
+    if (!file){
+        toast.error('File not uploaded');
+        return;
+    }
 
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                // Track the upload progress
-                const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                setProgress(progress);
-            },
-            (error) => {
-                // Handle errors during the upload
-                console.error(error);
-            },
-            () => {
-                // Handle successful completion of the upload
-                // For example, you can get the download URL of the uploaded file and use it
-                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                    console.log('File available at', downloadURL);
-                    // You can do something with the download URL, such as displaying the image
-                });
-            }
-        );
-    };
+    setImageUrl('');
+    setIsLoad(true)
+    setProgress(3);
 
-    return (
-        <div>
-            {/* File input for selecting an image */}
-            <input type="file" onChange={handleChange} />
+    const storageRef = ref(storage, `images/${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
 
-            {/* Button to trigger the upload */}
-            <button onClick={handleUpload}>Upload</button>
-
-            {/* Progress bar to display the upload progress */}
-            <progress value={progress} max="100" />
-        </div>
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        setProgress(progress);
+      },
+      (error) => {
+        console.error(error);
+        toast.error(error);
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            setPrevImg('')
+            setImageUrl(downloadURL);
+            setIsLoad(false)
+            setFile('')
+            toast.success('Image has been uploaded successfully');
+        });
+      }
     );
+  };
+
+  return (
+    <div>
+
+        <div className="container mt-5">
+            <div className="row">
+                <div className="col-md-6 offset-md-3">
+                    <div className="file-upload">
+                        <div className="image-upload-wrap">
+                            <input className="file-upload-input" type='file' onChange={handleChange} accept="image/*" />
+                            <div className="drag-text">
+                                { prevImg ?
+                                    <h3 style={{paddingBottom:'10px'}}>Drag and drop a file or select add Image</h3> :
+                                    <h3>Drag and drop a file or select add Image</h3>
+                                }
+                            </div>
+
+                            {prevImg && (
+                                <div className="mb-4">
+                                    <img src={prevImg} className="img-fluid" alt="Uploaded" width="150"/>
+                                </div>
+                            )}
+
+                        </div>
+                        <div className="file-upload-content">
+                            <img className="file-upload-image" src="#" alt="your image" />
+                            <div className="image-title-wrap">
+                                <button type="button" onClick={handleUpload} className="btn btn-danger remove-image">Remove <span className="image-title">Uploaded Image</span></button>
+                            </div>
+                        </div>
+
+                         <div className="mt-3">
+                            
+                            { isLoad ?
+                                <div className="progress">
+                                  <div className="progress-bar progress-bar-striped bg-success progress-bar-animated" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" style={{width:progress+'%'}}></div>
+                                </div> :
+
+                                <button className="file-upload-btn mt-3" type="button" onClick={handleUpload}>Add Image</button>
+                            }
+
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <div className="col-md-6 offset-md-3">
+                    {imageUrl && (
+                        <div className="mt-3">
+                            <a href={imageUrl} target="_blank">
+                                <img src={imageUrl} className="img-fluid" alt="Uploaded"/>
+                            </a>
+                        </div>
+                    )}
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+  );
 };
 
 export default ImageUpload;

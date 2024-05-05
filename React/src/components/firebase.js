@@ -13,6 +13,5 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
-console.log('sotrageeee', storage)
 
 export { storage }; // Export the storage object for use in other files
