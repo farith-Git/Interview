@@ -25,7 +25,7 @@ export class AppComponent {
     this.selectedFile = event.target.files[0];
     this.uploadProgress = 0
 
-    if (this.selectedFile) { // Add a null check
+    if (this.selectedFile) {
       const reader = new FileReader();
       reader.onload = (e) => {
         this.previewUrl = e.target?.result || null;
