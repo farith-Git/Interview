@@ -1,0 +1,56 @@
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-6 offset-md-3">
+      <div class="file-upload">
+        
+        <div class="text-success" *ngIf="imageUrl" >
+          Image has been uploaded successfully.
+        </div>
+
+        <div class="image-upload-wrap">
+          <input class="file-upload-input" type='file' (change)="onFileChange($event)" />
+
+          <div class="drag-text">
+            <h3 *ngIf="!loading">Drag and drop a file or select add Image</h3>
+            <h3 *ngIf="loading" class="d-flex justify-content-center align-items-center">
+              <div class="progress" style="width: 70%;">
+                <div class="progress-bar progress-bar-striped bg-success" 
+                     role="progressbar" 
+                     [style.width.%]="uploadProgress" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                </div>
+              </div>
+            </h3>
+            <div class="d-flex justify-content-center align-items-center mb-3" style="width: 100%;" *ngIf="previewUrl">
+              <img [src]="previewUrl" alt="Uploaded Image" width="50%">
+            </div>
+          </div>
+        </div>
+
+        <div class="file-upload-content">
+          <img class="file-upload-image" src="#" alt="your image" />
+          <div class="image-title-wrap">
+            <button type="button" class="btn btn-danger remove-image">Remove <span class="image-title">Uploaded Image</span></button>
+          </div>
+        </div>
+
+        <div class="text-danger" *ngIf="uploadError">
+          {{uploadError}}
+        </div>
+
+        <div class="pt-3">
+          <button *ngIf="!loading" class="file-upload-btn mt-3" type="button" (click)="uploadFile()">Add Image</button>
+          <button *ngIf="loading" class="file-upload-btn mt-3" type="button" [disabled]="loading"> Please wait ... </button>
+        </div>
+
+        <div *ngIf="imageUrl" class="mt-4">
+          <a [href]="imageUrl" target="_blank">
+            <img [src]="imageUrl" alt="Uploaded Image" width="100%">
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
